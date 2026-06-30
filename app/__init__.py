@@ -11,4 +11,6 @@ def create_app():
     with app.app_context():
         init_db(app.config['DB_PATH'])
 
+    from .routes import bp
+    app.register_blueprint(bp)
     return app
