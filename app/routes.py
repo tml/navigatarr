@@ -47,10 +47,20 @@ def api_refresh():
 def api_preferences():
     db_path = current_app.config['DB_PATH']
     data = request.get_json()
-    if not data or 'services' not in data:
+    if not data or not isinstance(data.get('services'), list):
         return jsonify({'error': 'invalid payload'}), 400
+    required_keys = {'container_id', 'custom_label', 'visible', 'sort_order'}
+    for item in data['services']:
+        if not isinstance(item, dict) or not required_keys.issubset(item.keys()):
+            return jsonify({'error': 'invalid service entry'}), 400
+        if not isinstance(item['container_id'], str) or not item['container_id']:
+            return jsonify({'error': 'invalid container_id'}), 400
+        if not isinstance(item['visible'], int) or item['visible'] not in (0, 1):
+            return jsonify({'error': 'invalid visible value'}), 400
+        if not isinstance(item['sort_order'], int):
+            return jsonify({'error': 'invalid sort_order'}), 400
     try:
         save_preferences(db_path, data['services'])
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'failed to save preferences'}), 500
     return jsonify({'ok': True})
