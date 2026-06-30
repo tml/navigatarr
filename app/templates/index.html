@@ -257,6 +257,13 @@ function renderCards(services) {
       animation: 150,
     });
   }
+  if (document.body.classList.contains('edit-mode')) {
+    document.querySelectorAll('#card-grid .card').forEach(card => {
+      card.style.display = '';
+      card.querySelector('.view-label').style.display = 'none';
+      card.querySelector('.edit-label').style.display = '';
+    });
+  }
 }
 
 async function doRefresh() {
