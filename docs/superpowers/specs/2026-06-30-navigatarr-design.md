@@ -49,7 +49,7 @@ Wraps the Docker SDK. `list_services()` returns:
 }]
 ```
 
-Only containers with at least one publicly bound port are included. Containers with multiple exposed ports generate one entry per port.
+Only containers with at least one publicly bound port are included. Containers with multiple exposed ports show all ports as separate links within a single card.
 
 ### `db.py`
 
