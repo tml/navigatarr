@@ -89,7 +89,11 @@ button:hover { background: #f0f0f0; color: #111; }
     <div class="status-dot status-{{ svc.status if svc.status in ('running','paused','exited','stopped','dead') else 'other' }}"></div>
     <div class="card-body">
       <div class="card-title">
+        {% if svc.urls %}
         <a href="{{ svc.urls[0] }}" target="_blank" class="view-label">{{ svc.custom_label or svc.name }}</a>
+        {% else %}
+        <span class="view-label">{{ svc.custom_label or svc.name }}</span>
+        {% endif %}
         <input class="edit-label" type="text" value="{{ svc.custom_label | e }}" placeholder="{{ svc.name | e }}" style="display:none;font-weight:600;font-size:0.95rem;border:1px solid #d0d0d0;border-radius:0.25rem;padding:0.1rem 0.4rem;width:100%;">
       </div>
       <div class="card-meta">{{ svc.name }} · {{ svc.image }}</div>
