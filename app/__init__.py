@@ -7,6 +7,8 @@ def create_app():
     app = Flask(__name__)
     app.config['DB_PATH'] = os.environ.get('DB_PATH', '/data/navigatarr.db')
     app.config['NAVIGATARR_HOST'] = os.environ.get('NAVIGATARR_HOST', 'localhost')
+    app.config['SHOW_SELF'] = os.environ.get('NAVIGATARR_SHOW_SELF', '0') == '1'
+    app.config['SELF_ID'] = os.environ.get('HOSTNAME', '')
 
     with app.app_context():
         init_db(app.config['DB_PATH'])

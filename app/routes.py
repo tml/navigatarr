@@ -5,10 +5,12 @@ from .db import get_preferences, upsert_services, save_preferences
 bp = Blueprint('main', __name__)
 
 
-def _merge(db_path, host):
+def _merge(db_path, host, show_self=True, self_id=''):
     services, error = list_services()
     if error:
         return None, error
+    if not show_self and self_id:
+        services = [s for s in services if s['container_id'] != self_id]
     upsert_services(db_path, [s['container_id'] for s in services])
     prefs = get_preferences(db_path)
     merged = []
@@ -29,7 +31,7 @@ def _merge(db_path, host):
 def index():
     db_path = current_app.config['DB_PATH']
     host = current_app.config['NAVIGATARR_HOST']
-    services, error = _merge(db_path, host)
+    services, error = _merge(db_path, host, current_app.config['SHOW_SELF'], current_app.config['SELF_ID'])
     return render_template('index.html', services=services or [], error=error)
 
 
@@ -37,7 +39,7 @@ def index():
 def api_refresh():
     db_path = current_app.config['DB_PATH']
     host = current_app.config['NAVIGATARR_HOST']
-    services, error = _merge(db_path, host)
+    services, error = _merge(db_path, host, current_app.config['SHOW_SELF'], current_app.config['SELF_ID'])
     if error:
         return jsonify({'error': error}), 500
     return jsonify({'services': services})
