@@ -16,6 +16,12 @@ def _get_host_ports(container):
                 for b in bindings:
                     if b and b.get('HostPort'):
                         ports.add(int(b['HostPort']))
+    if not ports and (container.attrs.get('HostConfig') or {}).get('NetworkMode') == 'host':
+        exposed = (container.attrs.get('Config') or {}).get('ExposedPorts') or {}
+        for port_proto in exposed:
+            port_num = port_proto.split('/')[0]
+            if port_num.isdigit():
+                ports.add(int(port_num))
     return sorted(ports)
 
 
