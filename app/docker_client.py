@@ -36,12 +36,18 @@ def list_services():
                 continue
             tags = container.image.tags
             image = tags[0] if tags else container.image.short_id
+            labels = container.labels or {}
             services.append({
                 'container_id': container.id[:12],
                 'name': container.name,
                 'image': image,
                 'status': container.status,
                 'ports': ports,
+                'label_name': labels.get('homepage.name', ''),
+                'label_icon': labels.get('homepage.icon', ''),
+                'label_href': labels.get('homepage.href', ''),
+                'label_group': labels.get('homepage.group', ''),
+                'label_description': labels.get('homepage.description', ''),
             })
         return services, None
     except Exception as e:

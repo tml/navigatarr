@@ -63,7 +63,14 @@ button:hover { background: #f0f0f0; color: #111; }
   border: 1px solid #d0d0d0; border-radius: 0.25rem;
   padding: 0.1rem 0.4rem; width: 100%;
 }
+.card-description { font-size: 0.8rem; color: #666; margin-bottom: 0.2rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .card-meta { font-size: 0.78rem; color: #888; margin-bottom: 0.5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card-group { display: inline-block; font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: #888; background: #f0f0f0; border-radius: 0.2rem; padding: 0.1rem 0.35rem; margin-bottom: 0.4rem; }
+.card-href-input {
+  font-size: 0.78rem; font-family: monospace; color: #555;
+  border: 1px solid #d0d0d0; border-radius: 0.25rem;
+  padding: 0.1rem 0.4rem; width: 100%; margin-top: 0.3rem;
+}
 .card-urls { display: flex; flex-direction: column; gap: 0.2rem; }
 .card-url { font-size: 0.78rem; color: #aaa; font-family: monospace; }
 .card-url a { color: #aaa; }
@@ -116,12 +123,22 @@ body.edit-mode .card.is-hidden { opacity: 0.4; }
     <div class="status-dot status-{{ svc.status if svc.status in ('running','paused','exited','stopped','dead') else 'other' }}"></div>
     {% if svc.icon_url %}<img src="{{ svc.icon_url }}" alt="" class="card-icon">{% endif %}
     <div class="card-body">
+      {% if svc.group %}<span class="card-group view-only">{{ svc.group }}</span>{% endif %}
       <div class="card-title">
-        <a href="{{ svc.urls[0] if svc.urls else '#' }}" target="_blank" class="view-label">{{ svc.custom_label or svc.name }}</a>
-        <input class="edit-label" type="text" value="{{ svc.custom_label | e }}" placeholder="{{ svc.name | e }}" style="display:none">
+        {% if svc.effective_href %}
+        <a href="{{ svc.effective_href | e }}" target="_blank" class="view-label">{{ svc.custom_label or svc.default_label }}</a>
+        {% else %}
+        <span class="view-label">{{ svc.custom_label or svc.default_label }}</span>
+        {% endif %}
+        <input class="edit-label" type="text" value="{{ svc.custom_label | e }}" placeholder="{{ svc.default_label | e }}" style="display:none">
       </div>
+      {% if svc.description %}<div class="card-description view-only">{{ svc.description }}</div>{% endif %}
       <div class="card-meta">{{ svc.name }} · {{ svc.image }}</div>
-      <div class="card-urls">
+      <input class="card-href-input edit-only" type="url"
+             value="{{ svc.custom_href | e }}"
+             placeholder="{{ svc.default_href | e }}"
+             style="display:none">
+      <div class="card-urls view-only">
         {% for url in svc.urls %}
         <div class="card-url"><a href="{{ url }}" target="_blank">{{ url }}</a></div>
         {% endfor %}
@@ -163,6 +180,8 @@ function enterEditMode() {
     card.style.display = '';
     card.querySelector('.view-label').style.display = 'none';
     card.querySelector('.edit-label').style.display = '';
+    card.querySelectorAll('.view-only').forEach(el => el.style.display = 'none');
+    card.querySelectorAll('.edit-only').forEach(el => el.style.display = '');
   });
 
   sortable = Sortable.create(document.getElementById('card-grid'), {
@@ -183,6 +202,8 @@ function exitEditMode() {
   document.querySelectorAll('#card-grid .card').forEach(card => {
     card.querySelector('.view-label').style.display = '';
     card.querySelector('.edit-label').style.display = 'none';
+    card.querySelectorAll('.view-only').forEach(el => el.style.display = '');
+    card.querySelectorAll('.edit-only').forEach(el => el.style.display = 'none');
     if (card.classList.contains('view-hidden')) {
       card.style.display = 'none';
     }
@@ -204,6 +225,7 @@ function collectServices() {
   return Array.from(document.querySelectorAll('#card-grid .card')).map((card, i) => ({
     container_id: card.dataset.id,
     custom_label: card.querySelector('.edit-label').value,
+    custom_href:  card.querySelector('.card-href-input').value,
     visible:      card.dataset.visible === '1' ? 1 : 0,
     sort_order:   i,
   }));
@@ -223,17 +245,26 @@ function buildCard(svc) {
   card.dataset.name    = svc.name;
   if (hidden) card.style.display = 'none';
   const iconHtml = svc.icon_url ? `<img src="${esc(svc.icon_url)}" alt="" class="card-icon">` : '';
+  const groupHtml = svc.group ? `<span class="card-group view-only" style="display:none">${esc(svc.group)}</span>` : '';
+  const descHtml = svc.description ? `<div class="card-description view-only" style="display:none">${esc(svc.description)}</div>` : '';
+  const titleHref = svc.effective_href || svc.urls[0] || '#';
   card.innerHTML = `
     <div class="card-handle">⠿</div>
     <div class="status-dot ${statusClass}"></div>
     ${iconHtml}
     <div class="card-body">
+      ${groupHtml}
       <div class="card-title">
-        <a href="${esc(svc.urls[0] || '#')}" target="_blank" class="view-label" style="display:none">${esc(svc.custom_label || svc.name)}</a>
-        <input class="edit-label" type="text" value="${esc(svc.custom_label || '')}" placeholder="${esc(svc.name)}">
+        <a href="${esc(titleHref)}" target="_blank" class="view-label" style="display:none">${esc(svc.custom_label || svc.default_label || svc.name)}</a>
+        <input class="edit-label" type="text" value="${esc(svc.custom_label || '')}" placeholder="${esc(svc.default_label || svc.name)}">
       </div>
+      ${descHtml}
       <div class="card-meta">${esc(svc.name)} · ${esc(svc.image)}</div>
-      <div class="card-urls">${urlsHtml}</div>
+      <input class="card-href-input edit-only" type="url"
+             value="${esc(svc.custom_href || '')}"
+             placeholder="${esc(svc.default_href || '')}"
+             style="">
+      <div class="card-urls view-only" style="display:none">${urlsHtml}</div>
     </div>
     <div class="card-actions">
       <button class="toggle-btn" onclick="toggleVisible(this)" title="Toggle visibility">
@@ -266,6 +297,8 @@ function renderCards(services) {
       card.style.display = '';
       card.querySelector('.view-label').style.display = 'none';
       card.querySelector('.edit-label').style.display = '';
+      card.querySelectorAll('.view-only').forEach(el => el.style.display = 'none');
+      card.querySelectorAll('.edit-only').forEach(el => el.style.display = '');
     });
   }
 }
