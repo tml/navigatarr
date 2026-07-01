@@ -1,6 +1,7 @@
 from flask import Blueprint, current_app, jsonify, render_template, request
 from .docker_client import list_services
 from .db import get_preferences, upsert_services, save_preferences
+from .icons import icon_url_for
 
 bp = Blueprint('main', __name__)
 
@@ -22,6 +23,7 @@ def _merge(db_path, host, show_self=True, self_id=''):
             'visible': bool(pref.get('visible', 1)),
             'sort_order': pref.get('sort_order', 0),
             'urls': [f'http://{host}:{p}' for p in svc['ports']],
+            'icon_url': icon_url_for(svc['name'], svc['image']),
         })
     merged.sort(key=lambda x: x['sort_order'])
     return merged, None

@@ -54,6 +54,7 @@ button:hover { background: #f0f0f0; color: #111; }
 .status-dead     { background: #ef4444; }
 .status-other    { background: #9ca3af; }
 
+.card-icon { width: 2rem; height: 2rem; object-fit: contain; flex-shrink: 0; border-radius: 0.25rem; }
 .card-body { flex: 1; min-width: 0; }
 .card-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.25rem; }
 .card-title a { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -113,6 +114,7 @@ body.edit-mode .card.is-hidden { opacity: 0.4; }
        {% if not svc.visible %}style="display:none"{% endif %}>
     <div class="card-handle">⠿</div>
     <div class="status-dot status-{{ svc.status if svc.status in ('running','paused','exited','stopped','dead') else 'other' }}"></div>
+    {% if svc.icon_url %}<img src="{{ svc.icon_url }}" alt="" class="card-icon">{% endif %}
     <div class="card-body">
       <div class="card-title">
         <a href="{{ svc.urls[0] if svc.urls else '#' }}" target="_blank" class="view-label">{{ svc.custom_label or svc.name }}</a>
@@ -220,9 +222,11 @@ function buildCard(svc) {
   card.dataset.visible = svc.visible ? '1' : '0';
   card.dataset.name    = svc.name;
   if (hidden) card.style.display = 'none';
+  const iconHtml = svc.icon_url ? `<img src="${esc(svc.icon_url)}" alt="" class="card-icon">` : '';
   card.innerHTML = `
     <div class="card-handle">⠿</div>
     <div class="status-dot ${statusClass}"></div>
+    ${iconHtml}
     <div class="card-body">
       <div class="card-title">
         <a href="${esc(svc.urls[0] || '#')}" target="_blank" class="view-label" style="display:none">${esc(svc.custom_label || svc.name)}</a>

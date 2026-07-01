@@ -1,6 +1,7 @@
 import os
 from flask import Flask
 from .db import init_db
+from .icons import load_icons
 
 
 def create_app():
@@ -12,6 +13,8 @@ def create_app():
 
     with app.app_context():
         init_db(app.config['DB_PATH'])
+
+    load_icons()
 
     from .routes import bp
     app.register_blueprint(bp)
